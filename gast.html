@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zusage & Wünsche • Niklas' 18. Geburtstag</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #050508;
+            color: #f8fafc;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(236, 72, 153, 0.22) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(59, 130, 246, 0.22) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.12) 0%, transparent 60%),
+                linear-gradient(rgba(3, 7, 18, 0.92), rgba(3, 7, 18, 0.96));
+        }
+        .glass-panel { background: rgba(12, 16, 32, 0.75); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8); }
+        .glass-card { background: rgba(20, 27, 45, 0.6); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .input-field { background: rgba(8, 12, 24, 0.9); border: 1px solid rgba(255, 255, 255, 0.12); }
+        .input-field:focus { background: rgba(8, 12, 24, 1); border-color: #ec4899; outline: none; box-shadow: 0 0 15px rgba(236, 72, 153, 0.35); }
+    </style>
+</head>
+<body class="min-h-screen py-10 px-4 sm:px-6 flex items-center justify-center relative overflow-x-hidden">
+
+    <div class="max-w-lg w-full space-y-6 relative z-10">
+        
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 text-center space-y-5 relative overflow-hidden border-t-2 border-pink-500/50">
+            <span class="px-3.5 py-1 text-xs font-bold uppercase bg-pink-500/15 text-pink-300 rounded-full border border-pink-500/30">13. November • Kanal Session</span>
+            <div>
+                <h1 class="text-3xl sm:text-4xl font-black text-white pt-1">Niklas' 18. Geburtstag</h1>
+                <p class="text-slate-300 text-xs sm:text-sm font-semibold">Moin! Wir feiern meinen 18. am Anleger am Schützenverein (Elbe-Seitenkanal). Zieht euch warm an und bringt gute Laune mit! 🔥</p>
+            </div>
+            <div class="grid grid-cols-3 gap-3 bg-slate-950/80 p-4 rounded-2xl border border-slate-800 shadow-inner">
+                <div><span id="days" class="text-2xl font-black text-pink-400">00</span><span class="block text-[9px] text-slate-400 uppercase font-bold">Tage</span></div>
+                <div><span id="hours" class="text-2xl font-black text-cyan-400">00</span><span class="block text-[9px] text-slate-400 uppercase font-bold">Std</span></div>
+                <div><span id="minutes" class="text-2xl font-black text-emerald-400">00</span><span class="block text-[9px] text-slate-400 uppercase font-bold">Min</span></div>
+            </div>
+            <button onclick="addToCalendar()" class="w-full bg-slate-900/80 hover:bg-slate-800 text-pink-300 font-bold py-2.5 px-4 rounded-xl border border-pink-500/30 text-xs transition shadow-md flex items-center justify-center gap-2">
+                📅 Termin im Kalender speichern (.ics)
+            </button>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 flex items-center justify-between text-xs text-slate-300 border-l-4 border-cyan-500">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-lg">💨</div>
+                <div>
+                    <span class="font-bold text-white block text-sm">Kanal Wetter-Check</span>
+                    <span id="weatherDesc" class="text-slate-400">Lade Kanaldaten...</span>
+                </div>
+            </div>
+            <div class="text-right">
+                <span id="weatherTemp" class="text-lg font-black text-cyan-400 block">--°C</span>
+                <span id="weatherWind" class="text-[10px] text-slate-400 font-semibold">Wind: -- km/h</span>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-3xl p-6 sm:p-7 space-y-5 border-t-2 border-cyan-500/50">
+            <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">✍️ Zusage & Wünsche eintragen</h2>
+            
+            <div class="space-y-3.5">
+                <input type="text" id="guestNameInput" placeholder="Dein Name / Spitzname *" class="input-field w-full rounded-xl px-4 py-2.5 text-sm text-slate-200">
+                <input type="text" id="guestPlusOneInput" placeholder="Begleitung (+1 Name, optional)..." class="input-field w-full rounded-xl px-4 py-2.5 text-xs text-slate-200">
+
+                <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5 space-y-2">
+                    <label class="text-xs font-bold text-slate-300">🍕 Pizza-Bedarf:</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="flex items-center justify-center gap-1 bg-slate-900 p-2.5 rounded-xl cursor-pointer text-xs text-slate-200 border border-slate-800 font-semibold">
+                            <input type="radio" name="pizzaChoice" value="Ja" checked class="accent-pink-500"> Ja
+                        </label>
+                        <label class="flex items-center justify-center gap-1 bg-slate-900 p-2.5 rounded-xl cursor-pointer text-xs text-slate-200 border border-slate-800 font-semibold">
+                            <input type="radio" name="pizzaChoice" value="Teile" class="accent-pink-500"> Teilen
+                        </label>
+                        <label class="flex items-center justify-center gap-1 bg-slate-900 p-2.5 rounded-xl cursor-pointer text-xs text-slate-200 border border-slate-800 font-semibold">
+                            <input type="radio" name="pizzaChoice" value="Nein" class="accent-pink-500"> Nein
+                        </label>
+                    </div>
+                </div>
+
+                <input type="text" id="guestItemInput" placeholder="Mitbringsel (z.B. Klappstuhl)..." class="input-field w-full rounded-xl px-3 py-2 text-xs text-slate-200">
+                <input type="text" id="guestDrinkInput" placeholder="Getränke-Wunsch..." class="input-field w-full rounded-xl px-3 py-2 text-xs text-slate-200">
+                <input type="text" id="guestMusicInput" placeholder="Musikwunsch..." class="input-field w-full rounded-xl px-3 py-2 text-xs text-slate-200">
+
+                <div class="grid grid-cols-3 gap-2.5 pt-2">
+                    <button onclick="submitGuest('yes')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg">🍻 Dabei</button>
+                    <button onclick="submitGuest('maybe')" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg">🤔 Vielleicht</button>
+                    <button onclick="submitGuest('no')" class="bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg">❌ Absage</button>
+                </div>
+            </div>
+
+            <div id="feedbackBox" class="hidden text-xs text-pink-300 bg-pink-950/60 p-3 rounded-xl border border-pink-500/40 text-center font-bold"></div>
+        </div>
+
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://suwtlzsofzjpjpvrxnpqa.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1d3RsenNvZnpqcGp2cnhucHFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MjgzMTEsImV4cCI6MjEwNzIwNDMxMX0.udkH3YhBaM4ItlzXbkvoibWaw5Aw5PVC6TpZvrPQVRo';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function fetchWeather() {
+            try {
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=53.3086&longitude=10.5333&current=temperature_2m,wind_speed_10m');
+                const data = await res.json();
+                if(data && data.current) {
+                    document.getElementById('weatherTemp').innerText = Math.round(data.current.temperature_2m) + '°C';
+                    document.getElementById('weatherWind').innerText = "Wind: " + Math.round(data.current.wind_speed_10m) + " km/h";
+                    document.getElementById('weatherDesc').innerText = data.current.wind_speed_10m > 20 ? "Frischer Wind am Wasser" : "Ruhige Kanal-Luft";
+                }
+            } catch(e) {
+                document.getElementById('weatherTemp').innerText = "7°C";
+                document.getElementById('weatherWind').innerText = "Windig";
+                document.getElementById('weatherDesc').innerText = "Typischer November";
+            }
+        }
+        fetchWeather();
+
+        function updateCountdown() {
+            const now = new Date();
+            let year = now.getFullYear();
+            let targetDate = new Date(year, 10, 13, 18, 0, 0);
+            if (now > targetDate) targetDate = new Date(year + 1, 10, 13, 18, 0, 0);
+            const diff = targetDate - now;
+            document.getElementById('days').innerText = String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(2, '0');
+            document.getElementById('hours').innerText = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0');
+            document.getElementById('minutes').innerText = String(Math.floor((diff / 1000 / 60) % 60)).padStart(2, '0');
+        }
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        async function submitGuest(status) {
+            const name = document.getElementById('guestNameInput').value.trim();
+            if(!name) { alert("Bitte gib deinen Namen ein!"); return; }
+
+            const plus_one = document.getElementById('guestPlusOneInput').value.trim();
+            const pizza = document.querySelector('input[name="pizzaChoice"]:checked').value;
+            const item = document.getElementById('guestItemInput').value.trim();
+            const drink = document.getElementById('guestDrinkInput').value.trim();
+            const music = document.getElementById('guestMusicInput').value.trim();
+
+            const { error } = await _supabase.from('guests').upsert([
+                { name, status, plus_one, pizza, item, drink, music }
+            ], { onConflict: 'name' });
+
+            const feedback = document.getElementById('feedbackBox');
+            feedback.classList.remove('hidden');
+            if(error) {
+                feedback.innerHTML = `❌ Fehler: ${error.message}`;
+            } else {
+                feedback.innerHTML = `🔥 Live in Cloud gespeichert, <strong>${name}</strong>!`;
+                document.getElementById('guestNameInput').value = '';
+                document.getElementById('guestPlusOneInput').value = '';
+                document.getElementById('guestItemInput').value = '';
+                document.getElementById('guestDrinkInput').value = '';
+                document.getElementById('guestMusicInput').value = '';
+            }
+            setTimeout(() => feedback.classList.add('hidden'), 4000);
+        }
+
+        function addToCalendar() {
+            const icsData = [
+                "BEGIN:VCALENDAR",
+                "VERSION:2.0",
+                "BEGIN:VEVENT",
+                "SUMMARY:Niklas' 18. Geburtstag - Kanal Session",
+                "DESCRIPTION:Feier am Elbe-Seitenkanal Anleger beim Schützenverein Scharnebeck.",
+                "LOCATION:Anleger Schützenverein, Scharnebeck",
+                "DTSTART:20261113T180000Z",
+                "DTEND:20261114T020000Z",
+                "END:VEVENT",
+                "END:VCALENDAR"
+            ].join("\n");
+
+            const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.setAttribute('download', 'Niklas_18_Geburtstag.ics');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
