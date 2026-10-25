@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zusage & Wünsche • Niklas' 18. Geburtstag</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
@@ -22,6 +21,7 @@
         .glass-card { background: rgba(20, 27, 45, 0.6); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
         .input-field { background: rgba(8, 12, 24, 0.9); border: 1px solid rgba(255, 255, 255, 0.12); }
         .input-field:focus { background: rgba(8, 12, 24, 1); border-color: #ec4899; outline: none; box-shadow: 0 0 15px rgba(236, 72, 153, 0.35); }
+        .tab-active { background: rgba(236, 72, 153, 0.25); border-color: rgba(236, 72, 153, 0.6); color: #f472b6; }
     </style>
 </head>
 <body class="min-h-screen py-10 px-4 sm:px-6 flex items-center justify-center relative overflow-x-hidden">
@@ -29,10 +29,10 @@
     <div class="max-w-lg w-full space-y-6 relative z-10">
         
         <div class="glass-panel rounded-3xl p-6 sm:p-8 text-center space-y-5 relative overflow-hidden border-t-2 border-pink-500/50">
-            <span class="px-3.5 py-1 text-xs font-bold uppercase bg-pink-500/15 text-pink-300 rounded-full border border-pink-500/30">13. November • Kanal Session</span>
+            <span class="px-3.5 py-1 text-xs font-bold uppercase bg-pink-500/15 text-pink-300 rounded-full border border-pink-500/30">13. November • Garten Session</span>
             <div>
                 <h1 class="text-3xl sm:text-4xl font-black text-white pt-1">Niklas' 18. Geburtstag</h1>
-                <p class="text-slate-300 text-xs sm:text-sm font-semibold">Moin! Wir feiern meinen 18. am Anleger am Schützenverein (Elbe-Seitenkanal). Zieht euch warm an und bringt gute Laune mit! 🔥</p>
+                <p class="text-slate-300 text-xs sm:text-sm font-semibold mt-1">Moin! Wir feiern meinen 18. im Garten in der <strong>Bardowicker Str. 24, 21379 Scharnebeck</strong>. Zieht euch warm an und bringt gute Laune mit! 🔥</p>
             </div>
             <div class="grid grid-cols-3 gap-3 bg-slate-950/80 p-4 rounded-2xl border border-slate-800 shadow-inner">
                 <div><span id="days" class="text-2xl font-black text-pink-400">00</span><span class="block text-[9px] text-slate-400 uppercase font-bold">Tage</span></div>
@@ -42,20 +42,6 @@
             <button onclick="addToCalendar()" class="w-full bg-slate-900/80 hover:bg-slate-800 text-pink-300 font-bold py-2.5 px-4 rounded-xl border border-pink-500/30 text-xs transition shadow-md flex items-center justify-center gap-2">
                 📅 Termin im Kalender speichern (.ics)
             </button>
-        </div>
-
-        <div class="glass-card rounded-2xl p-4 flex items-center justify-between text-xs text-slate-300 border-l-4 border-cyan-500">
-            <div class="flex items-center gap-3">
-                <div class="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-lg">💨</div>
-                <div>
-                    <span class="font-bold text-white block text-sm">Kanal Wetter-Check</span>
-                    <span id="weatherDesc" class="text-slate-400">Lade Kanaldaten...</span>
-                </div>
-            </div>
-            <div class="text-right">
-                <span id="weatherTemp" class="text-lg font-black text-cyan-400 block">--°C</span>
-                <span id="weatherWind" class="text-[10px] text-slate-400 font-semibold">Wind: -- km/h</span>
-            </div>
         </div>
 
         <div class="glass-panel rounded-3xl p-6 sm:p-7 space-y-5 border-t-2 border-cyan-500/50">
@@ -92,31 +78,26 @@
             </div>
 
             <div id="feedbackBox" class="hidden text-xs text-pink-300 bg-pink-950/60 p-3 rounded-xl border border-pink-500/40 text-center font-bold"></div>
+
+            <div class="pt-4 border-t border-slate-800 space-y-3">
+                <div class="flex justify-between items-center text-xs">
+                    <span id="statsCounter" class="uppercase tracking-wider font-extrabold text-slate-400 text-[10px]">Gästeliste (0)</span>
+                    <div class="flex gap-1">
+                        <button onclick="setFilter('all')" id="tabAll" class="px-2.5 py-1 rounded-lg border text-[10px] tab-active transition font-semibold">Alle</button>
+                        <button onclick="setFilter('yes')" id="tabYes" class="px-2.5 py-1 rounded-lg border text-[10px] border-slate-800 text-slate-400 transition font-semibold">Dabei</button>
+                        <button onclick="setFilter('maybe')" id="tabMaybe" class="px-2.5 py-1 rounded-lg border text-[10px] border-slate-800 text-slate-400 transition font-semibold">Vielleicht</button>
+                        <button onclick="setFilter('no')" id="tabNo" class="px-2.5 py-1 rounded-lg border text-[10px] border-slate-800 text-slate-400 transition font-semibold">Absage</button>
+                    </div>
+                </div>
+                <div id="guestListView" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+            </div>
         </div>
 
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://suwtlzsofzjpjpvrxnpqa.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1d3RsenNvZnpqcGp2cnhucHFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MjgzMTEsImV4cCI6MjEwNzIwNDMxMX0.udkH3YhBaM4ItlzXbkvoibWaw5Aw5PVC6TpZvrPQVRo';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        async function fetchWeather() {
-            try {
-                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=53.3086&longitude=10.5333&current=temperature_2m,wind_speed_10m');
-                const data = await res.json();
-                if(data && data.current) {
-                    document.getElementById('weatherTemp').innerText = Math.round(data.current.temperature_2m) + '°C';
-                    document.getElementById('weatherWind').innerText = "Wind: " + Math.round(data.current.wind_speed_10m) + " km/h";
-                    document.getElementById('weatherDesc').innerText = data.current.wind_speed_10m > 20 ? "Frischer Wind am Wasser" : "Ruhige Kanal-Luft";
-                }
-            } catch(e) {
-                document.getElementById('weatherTemp').innerText = "7°C";
-                document.getElementById('weatherWind').innerText = "Windig";
-                document.getElementById('weatherDesc').innerText = "Typischer November";
-            }
-        }
-        fetchWeather();
+        const STORAGE_KEY = 'niklas_birthday_shared_guests_v2';
+        let currentFilter = 'all';
 
         function updateCountdown() {
             const now = new Date();
@@ -131,33 +112,91 @@
         setInterval(updateCountdown, 1000);
         updateCountdown();
 
-        async function submitGuest(status) {
-            const name = document.getElementById('guestNameInput').value.trim();
-            if(!name) { alert("Bitte gib deinen Namen ein!"); return; }
+        function submitGuest(status) {
+            const inputName = document.getElementById('guestNameInput');
+            const name = inputName.value.trim();
+            if(!name) { alert("Bitte gib deinen Namen ein!"); inputName.focus(); return; }
 
-            const plus_one = document.getElementById('guestPlusOneInput').value.trim();
+            const plusOne = document.getElementById('guestPlusOneInput').value.trim();
             const pizza = document.querySelector('input[name="pizzaChoice"]:checked').value;
             const item = document.getElementById('guestItemInput').value.trim();
             const drink = document.getElementById('guestDrinkInput').value.trim();
             const music = document.getElementById('guestMusicInput').value.trim();
 
-            const { error } = await _supabase.from('guests').upsert([
-                { name, status, plus_one, pizza, item, drink, music }
-            ], { onConflict: 'name' });
+            let guests = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
+                { name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "" }
+            ];
+
+            const existingIndex = guests.findIndex(g => g.name.toLowerCase() === name.toLowerCase());
+            if(existingIndex >= 0) {
+                guests[existingIndex] = { name, status, plusOne, pizza, item, drink, music };
+            } else {
+                guests.push({ name, status, plusOne, pizza, item, drink, music });
+            }
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(guests));
+            inputName.value = '';
+            document.getElementById('guestPlusOneInput').value = '';
+            document.getElementById('guestItemInput').value = '';
+            document.getElementById('guestDrinkInput').value = '';
+            document.getElementById('guestMusicInput').value = '';
+            renderGuestListView();
 
             const feedback = document.getElementById('feedbackBox');
             feedback.classList.remove('hidden');
-            if(error) {
-                feedback.innerHTML = `❌ Fehler: ${error.message}`;
-            } else {
-                feedback.innerHTML = `🔥 Live in Cloud gespeichert, <strong>${name}</strong>!`;
-                document.getElementById('guestNameInput').value = '';
-                document.getElementById('guestPlusOneInput').value = '';
-                document.getElementById('guestItemInput').value = '';
-                document.getElementById('guestDrinkInput').value = '';
-                document.getElementById('guestMusicInput').value = '';
-            }
+            feedback.innerHTML = `🔥 Gespeichert für <strong>${name}</strong>!`;
             setTimeout(() => feedback.classList.add('hidden'), 4000);
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            ['all', 'yes', 'maybe', 'no'].forEach(f => {
+                const btn = document.getElementById('tab' + f.charAt(0).toUpperCase() + f.slice(1));
+                btn.className = f === filter 
+                    ? "px-2.5 py-1 rounded-lg border text-[10px] tab-active transition font-semibold"
+                    : "px-2.5 py-1 rounded-lg border text-[10px] border-slate-800 text-slate-400 transition font-semibold";
+            });
+            renderGuestListView();
+        }
+
+        function renderGuestListView() {
+            const container = document.getElementById('guestListView');
+            const statsCounter = document.getElementById('statsCounter');
+            let guests = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
+                { name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "" }
+            ];
+
+            container.innerHTML = '';
+            statsCounter.innerText = `Gästeliste (${guests.length})`;
+
+            const filtered = guests.guests || guests.filter(g => {
+                if(currentFilter === 'yes') return g.status === 'yes';
+                if(currentFilter === 'maybe') return g.status === 'maybe';
+                if(currentFilter === 'no') return g.status === 'no';
+                return true;
+            });
+
+            if(filtered.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-500 py-4">Keine Einträge in dieser Kategorie.</div>`;
+                return;
+            }
+
+            filtered.forEach(g => {
+                let badgeColor = g.status === 'yes' ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : (g.status === 'maybe' ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "bg-rose-500/15 text-rose-400 border-rose-500/30");
+                let statusText = g.status === 'yes' ? "Dabei 🍻" : (g.status === 'maybe' ? "Vielleicht 🤔" : "Absage ❌");
+
+                let row = document.createElement('div');
+                row.className = "flex flex-col text-xs glass-card p-3 rounded-xl gap-1";
+                row.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-slate-100">${g.name}</span>
+                        <span class="px-2 py-0.5 rounded-md border text-[10px] font-extrabold ${badgeColor}">${statusText}</span>
+                    </div>
+                    ${g.plusOne ? `<div class="text-[11px] text-pink-300 font-medium">👥 Begleitung: ${g.plusOne}</div>` : ''}
+                    <div class="text-[10px] text-amber-300">🍕 Pizza: ${g.pizza} | 📦 Mitbringsel: ${g.item || 'Keins'}</div>
+                `;
+                container.appendChild(row);
+            });
         }
 
         function addToCalendar() {
@@ -165,9 +204,9 @@
                 "BEGIN:VCALENDAR",
                 "VERSION:2.0",
                 "BEGIN:VEVENT",
-                "SUMMARY:Niklas' 18. Geburtstag - Kanal Session",
-                "DESCRIPTION:Feier am Elbe-Seitenkanal Anleger beim Schützenverein Scharnebeck.",
-                "LOCATION:Anleger Schützenverein, Scharnebeck",
+                "SUMMARY:Niklas' 18. Geburtstag - Garten Party",
+                "DESCRIPTION:Feier im Garten in der Bardowicker Str. 24, Scharnebeck.",
+                "LOCATION:Bardowicker Str. 24, 21379 Scharnebeck",
                 "DTSTART:20261113T180000Z",
                 "DTEND:20261114T020000Z",
                 "END:VEVENT",
@@ -182,6 +221,9 @@
             link.click();
             document.body.removeChild(link);
         }
+
+        setInterval(renderGuestListView, 1000);
+        renderGuestListView();
     </script>
 </body>
 </html>
