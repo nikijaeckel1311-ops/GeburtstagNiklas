@@ -6,6 +6,11 @@
     <title>Zusage & Wünsche • Niklas' 18. Geburtstag</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -111,9 +116,23 @@
     </div>
 
     <script>
-        const STORAGE_KEY = 'niklas_birthday_shared_guests_v2';
+        // Deine Firebase Konfiguration aus dem Screenshot
+        const firebaseConfig = {
+            apiKey: "AIzaSyDjldID2Khu8KWu0dQjkkWOc-dlNu90d28",
+            authDomain: "geburtstag-5bb5e.firebaseapp.com",
+            databaseURL: "https://geburtstag-5bb5e-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "geburtstag-5bb5e",
+            storageBucket: "geburtstag-5bb5e.appspot.com",
+            messagingSenderId: "182967196662",
+            appId: "1:182967196662:web:3a7c2bdb14b22090cb05d7"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         const MY_SUBMISSION_KEY = 'niklas_birthday_my_submission_id';
         let currentFilter = 'all';
+        let localGuestsCache = [];
 
         function getOrCreateGuestId() {
             let guestId = localStorage.getItem(MY_SUBMISSION_KEY);
@@ -136,12 +155,20 @@
         setInterval(updateCountdown, 1000);
         updateCountdown();
 
+        function listenToLiveUpdates() {
+            db.ref('guests').on('value', (snapshot) => {
+                const data = snapshot.val();
+                localGuestsCache = data ? Object.values(data) : [];
+                checkForExistingSubmission();
+                renderGuestListView();
+            });
+        }
+
         function checkForExistingSubmission() {
             const guestId = localStorage.getItem(MY_SUBMISSION_KEY);
             if (!guestId) return;
 
-            let guests = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-            const myRecord = guests.find(g => g.id === guestId);
+            const myRecord = localGuestsCache.find(g => g.id === guestId);
 
             if (myRecord) {
                 const nameInput = document.getElementById('guestNameInput');
@@ -185,24 +212,10 @@
             const music = document.getElementById('guestMusicInput').value.trim();
             const activity = document.getElementById('guestActivityInput').value.trim();
 
-            let guests = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
-                { id: "admin_niklas", name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "", activity: "" }
-            ];
-
-            const existingIndex = guests.findIndex(g => (g.id && g.id === guestId) || g.name.toLowerCase() === name.toLowerCase());
             const newRecord = { id: guestId, name, status, plusOne, pizza, item, drink, music, activity };
 
-            if(existingIndex >= 0) {
-                guests[existingIndex] = newRecord;
-            } else {
-                guests.push(newRecord);
-            }
-
             localStorage.setItem(MY_SUBMISSION_KEY, guestId);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(guests));
-
-            checkForExistingSubmission();
-            renderGuestListView();
+            db.ref('guests/' + guestId).set(newRecord);
 
             const feedback = document.getElementById('feedbackBox');
             feedback.classList.remove('hidden');
@@ -224,16 +237,12 @@
         function renderGuestListView() {
             const container = document.getElementById('guestListView');
             const statsCounter = document.getElementById('statsCounter');
-            let guests = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
-                { id: "admin_niklas", name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "", activity: "" }
-            ];
-
             const myGuestId = localStorage.getItem(MY_SUBMISSION_KEY);
 
             container.innerHTML = '';
-            statsCounter.innerText = `Gästeliste (${guests.length})`;
+            statsCounter.innerText = `Gästeliste (${localGuestsCache.length})`;
 
-            const filtered = guests.filter(g => {
+            const filtered = localGuestsCache.filter(g => {
                 if(currentFilter === 'yes') return g.status === 'yes';
                 if(currentFilter === 'maybe') return g.status === 'maybe';
                 if(currentFilter === 'no') return g.status === 'no';
@@ -288,9 +297,7 @@
             document.body.removeChild(link);
         }
 
-        checkForExistingSubmission();
-        renderGuestListView();
-        setInterval(renderGuestListView, 2000);
+        listenToLiveUpdates();
     </script>
 </body>
 </html>

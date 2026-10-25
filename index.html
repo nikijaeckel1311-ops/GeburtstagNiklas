@@ -6,6 +6,11 @@
     <title>Master-Planer • Niklas' 18. Geburtstag</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -157,14 +162,28 @@
     </div>
 
     <script>
-        const STORAGE_KEY = 'niklas_birthday_shared_guests_v2';
+        // Deine Firebase Konfiguration aus dem Screenshot
+        const firebaseConfig = {
+            apiKey: "AIzaSyDjldID2Khu8KWu0dQjkkWOc-dlNu90d28",
+            authDomain: "geburtstag-5bb5e.firebaseapp.com",
+            databaseURL: "https://geburtstag-5bb5e-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "geburtstag-5bb5e",
+            storageBucket: "geburtstag-5bb5e.appspot.com",
+            messagingSenderId: "182967196662",
+            appId: "1:182967196662:web:3a7c2bdb14b22090cb05d7"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         let globalPizzaCount = 1;
+        let guestsData = [];
 
         function checkPin() {
             if(document.getElementById('pinInput').value === '1818') {
                 document.getElementById('authModal').classList.add('hidden');
                 document.getElementById('adminContent').classList.remove('hidden');
-                loadAdminGuests();
+                startLiveSync();
             } else {
                 document.getElementById('pinError').classList.remove('hidden');
             }
@@ -191,16 +210,21 @@
         setInterval(updateCountdown, 1000);
         updateCountdown();
 
-        function loadAdminGuests() {
-            const listContainer = document.getElementById('adminGuestList');
-            let guests = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
-                { id: "admin_niklas", name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "", activity: "" }
-            ];
+        function startLiveSync() {
+            db.ref('guests').on('value', (snapshot) => {
+                const data = snapshot.val();
+                guestsData = data ? Object.values(data) : [];
+                renderAdminList();
+            });
+        }
 
+        function renderAdminList() {
+            const listContainer = document.getElementById('adminGuestList');
             listContainer.innerHTML = '';
+
             let countYes = 0, countMaybe = 0, countNo = 0, pizzaCount = 0;
 
-            guests.forEach((g, index) => {
+            guestsData.forEach((g) => {
                 if(g.status === 'yes') {
                     countYes++;
                     if(g.pizza === 'Ja' || g.pizza === 'Teile') {
@@ -220,7 +244,7 @@
                         <span class="font-bold text-slate-100 text-sm">${g.name}</span>
                         <div class="flex items-center gap-2">
                             <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md border ${badgeColor}">${statusText}</span>
-                            <button onclick="deleteGuest(${index})" class="text-rose-400 hover:text-rose-200 px-1.5 py-0.5 bg-rose-950/60 rounded border border-rose-900/50 text-[10px]">🗑️</button>
+                            <button onclick="deleteGuest('${g.id}')" class="text-rose-400 hover:text-rose-200 px-1.5 py-0.5 bg-rose-950/60 rounded border border-rose-900/50 text-[10px]">🗑️</button>
                         </div>
                     </div>
                     ${g.plusOne ? `<div class="text-[11px] text-pink-300">👥 Begleitung: ${g.plusOne}</div>` : ''}
@@ -238,16 +262,11 @@
             calculateBudget();
         }
 
-        function deleteGuest(index) {
-            let guests = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-            if(confirm(`Möchtest du "${guests[index].name}" wirklich löschen?`)) {
-                guests.splice(index, 1);
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(guests));
-                loadAdminGuests();
+        function deleteGuest(id) {
+            if(confirm(`Möchtest du diesen Eintrag wirklich löschen?`)) {
+                db.ref('guests/' + id).remove();
             }
         }
-
-        setInterval(loadAdminGuests, 1000);
 
         function calculateBudget() {
             const total = parseFloat(document.getElementById('totalCostInput').value) || 0;
