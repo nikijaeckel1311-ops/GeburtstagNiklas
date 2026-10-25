@@ -21,6 +21,7 @@
         .glass-card { background: rgba(20, 27, 45, 0.6); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
         .input-field { background: rgba(8, 12, 24, 0.9); border: 1px solid rgba(255, 255, 255, 0.12); }
         .input-field:focus { background: rgba(8, 12, 24, 1); border-color: #ec4899; outline: none; box-shadow: 0 0 15px rgba(236, 72, 153, 0.35); }
+        .input-disabled { background: rgba(15, 23, 42, 0.6) !important; color: #94a3b8 !important; border-color: rgba(255, 255, 255, 0.05) !important; cursor: not-allowed; }
         .tab-active { background: rgba(236, 72, 153, 0.25); border-color: rgba(236, 72, 153, 0.6); color: #f472b6; }
     </style>
 </head>
@@ -28,6 +29,7 @@
 
     <div class="max-w-lg w-full space-y-6 relative z-10">
         
+        <!-- Header Banner & Countdown -->
         <div class="glass-panel rounded-3xl p-6 sm:p-8 text-center space-y-5 relative overflow-hidden border-t-2 border-pink-500/50">
             <span class="px-3.5 py-1 text-xs font-bold uppercase bg-pink-500/15 text-pink-300 rounded-full border border-pink-500/30">13. November • Garten Session</span>
             <div>
@@ -44,11 +46,23 @@
             </button>
         </div>
 
+        <!-- Formular & Gästeliste -->
         <div class="glass-panel rounded-3xl p-6 sm:p-7 space-y-5 border-t-2 border-cyan-500/50">
-            <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">✍️ Zusage & Wünsche eintragen</h2>
+            <h2 id="formTitle" class="text-base font-bold text-slate-100 flex items-center gap-2">✍️ Zusage & Wünsche eintragen</h2>
             
+            <div id="alreadySubmittedBanner" class="hidden bg-cyan-950/40 border border-cyan-500/30 rounded-2xl p-3.5 text-xs text-cyan-200 space-y-1">
+                <div class="font-bold flex items-center gap-1.5 text-cyan-300">
+                    <span>✨ Du bist bereits eingetragen!</span>
+                </div>
+                <p class="text-[11px] text-slate-300">Du kannst deine Angaben oder deinen Status hier jederzeit aktualisieren.</p>
+            </div>
+
             <div class="space-y-3.5">
-                <input type="text" id="guestNameInput" placeholder="Dein Name / Spitzname *" class="input-field w-full rounded-xl px-4 py-2.5 text-sm text-slate-200">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-400 mb-1 ml-1" id="nameLabel">Dein Name / Spitzname *</label>
+                    <input type="text" id="guestNameInput" placeholder="Dein Name / Spitzname *" class="input-field w-full rounded-xl px-4 py-2.5 text-sm text-slate-200">
+                </div>
+                
                 <input type="text" id="guestPlusOneInput" placeholder="Begleitung (+1 Name, optional)..." class="input-field w-full rounded-xl px-4 py-2.5 text-xs text-slate-200">
 
                 <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5 space-y-2">
@@ -71,9 +85,9 @@
                 <input type="text" id="guestMusicInput" placeholder="Musikwunsch..." class="input-field w-full rounded-xl px-3 py-2 text-xs text-slate-200">
 
                 <div class="grid grid-cols-3 gap-2.5 pt-2">
-                    <button onclick="submitGuest('yes')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg">🍻 Dabei</button>
-                    <button onclick="submitGuest('maybe')" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg">🤔 Vielleicht</button>
-                    <button onclick="submitGuest('no')" class="bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg">❌ Absage</button>
+                    <button onclick="submitGuest('yes')" id="btnYes" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg transition">🍻 Dabei</button>
+                    <button onclick="submitGuest('maybe')" id="btnMaybe" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg transition">🤔 Vielleicht</button>
+                    <button onclick="submitGuest('no')" id="btnNo" class="bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg transition">❌ Absage</button>
                 </div>
             </div>
 
@@ -97,7 +111,16 @@
 
     <script>
         const STORAGE_KEY = 'niklas_birthday_shared_guests_v2';
+        const MY_SUBMISSION_KEY = 'niklas_birthday_my_submission_id';
         let currentFilter = 'all';
+
+        function getOrCreateGuestId() {
+            let guestId = localStorage.getItem(MY_SUBMISSION_KEY);
+            if (!guestId) {
+                guestId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+            }
+            return guestId;
+        }
 
         function updateCountdown() {
             const now = new Date();
@@ -112,11 +135,47 @@
         setInterval(updateCountdown, 1000);
         updateCountdown();
 
+        function checkForExistingSubmission() {
+            const guestId = localStorage.getItem(MY_SUBMISSION_KEY);
+            if (!guestId) return;
+
+            let guests = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const myRecord = guests.find(g => g.id === guestId);
+
+            if (myRecord) {
+                const nameInput = document.getElementById('guestNameInput');
+                nameInput.value = myRecord.name;
+                nameInput.disabled = true;
+                nameInput.classList.add('input-disabled');
+
+                document.getElementById('guestPlusOneInput').value = myRecord.plusOne || '';
+                document.getElementById('guestItemInput').value = myRecord.item || '';
+                document.getElementById('guestDrinkInput').value = myRecord.drink || '';
+                document.getElementById('guestMusicInput').value = myRecord.music || '';
+
+                if (myRecord.pizza) {
+                    const radio = document.querySelector(`input[name="pizzaChoice"][value="${myRecord.pizza}"]`);
+                    if (radio) radio.checked = true;
+                }
+
+                document.getElementById('alreadySubmittedBanner').classList.remove('hidden');
+                document.getElementById('formTitle').innerText = '🔄 Deine Antwort aktualisieren';
+                document.getElementById('btnYes').innerText = '🍻 Dabei (Update)';
+                document.getElementById('btnMaybe').innerText = '🤔 Vielleicht (Update)';
+                document.getElementById('btnNo').innerText = '❌ Absage (Update)';
+            }
+        }
+
         function submitGuest(status) {
             const inputName = document.getElementById('guestNameInput');
             const name = inputName.value.trim();
-            if(!name) { alert("Bitte gib deinen Namen ein!"); inputName.focus(); return; }
+            if(!name) { 
+                alert("Bitte gib deinen Namen ein!"); 
+                inputName.focus(); 
+                return; 
+            }
 
+            const guestId = getOrCreateGuestId();
             const plusOne = document.getElementById('guestPlusOneInput').value.trim();
             const pizza = document.querySelector('input[name="pizzaChoice"]:checked').value;
             const item = document.getElementById('guestItemInput').value.trim();
@@ -124,27 +183,27 @@
             const music = document.getElementById('guestMusicInput').value.trim();
 
             let guests = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
-                { name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "" }
+                { id: "admin_niklas", name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "" }
             ];
 
-            const existingIndex = guests.findIndex(g => g.name.toLowerCase() === name.toLowerCase());
+            const existingIndex = guests.findIndex(g => (g.id && g.id === guestId) || g.name.toLowerCase() === name.toLowerCase());
+            const newRecord = { id: guestId, name, status, plusOne, pizza, item, drink, music };
+
             if(existingIndex >= 0) {
-                guests[existingIndex] = { name, status, plusOne, pizza, item, drink, music };
+                guests[existingIndex] = newRecord;
             } else {
-                guests.push({ name, status, plusOne, pizza, item, drink, music });
+                guests.push(newRecord);
             }
 
+            localStorage.setItem(MY_SUBMISSION_KEY, guestId);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(guests));
-            inputName.value = '';
-            document.getElementById('guestPlusOneInput').value = '';
-            document.getElementById('guestItemInput').value = '';
-            document.getElementById('guestDrinkInput').value = '';
-            document.getElementById('guestMusicInput').value = '';
+
+            checkForExistingSubmission();
             renderGuestListView();
 
             const feedback = document.getElementById('feedbackBox');
             feedback.classList.remove('hidden');
-            feedback.innerHTML = `🔥 Gespeichert für <strong>${name}</strong>!`;
+            feedback.innerHTML = `🔥 Antwort aktualisiert für <strong>${name}</strong>!`;
             setTimeout(() => feedback.classList.add('hidden'), 4000);
         }
 
@@ -163,13 +222,15 @@
             const container = document.getElementById('guestListView');
             const statsCounter = document.getElementById('statsCounter');
             let guests = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
-                { name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "" }
+                { id: "admin_niklas", name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "" }
             ];
+
+            const myGuestId = localStorage.getItem(MY_SUBMISSION_KEY);
 
             container.innerHTML = '';
             statsCounter.innerText = `Gästeliste (${guests.length})`;
 
-            const filtered = guests.guests || guests.filter(g => {
+            const filtered = guests.filter(g => {
                 if(currentFilter === 'yes') return g.status === 'yes';
                 if(currentFilter === 'maybe') return g.status === 'maybe';
                 if(currentFilter === 'no') return g.status === 'no';
@@ -184,12 +245,13 @@
             filtered.forEach(g => {
                 let badgeColor = g.status === 'yes' ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : (g.status === 'maybe' ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "bg-rose-500/15 text-rose-400 border-rose-500/30");
                 let statusText = g.status === 'yes' ? "Dabei 🍻" : (g.status === 'maybe' ? "Vielleicht 🤔" : "Absage ❌");
+                let isMe = (myGuestId && g.id === myGuestId);
 
                 let row = document.createElement('div');
-                row.className = "flex flex-col text-xs glass-card p-3 rounded-xl gap-1";
+                row.className = `flex flex-col text-xs glass-card p-3 rounded-xl gap-1 ${isMe ? 'border-pink-500/40 bg-pink-950/10' : ''}`;
                 row.innerHTML = `
                     <div class="flex justify-between items-center">
-                        <span class="font-bold text-slate-100">${g.name}</span>
+                        <span class="font-bold text-slate-100">${g.name} ${isMe ? '<span class="text-[10px] text-pink-400 font-normal">(Du)</span>' : ''}</span>
                         <span class="px-2 py-0.5 rounded-md border text-[10px] font-extrabold ${badgeColor}">${statusText}</span>
                     </div>
                     ${g.plusOne ? `<div class="text-[11px] text-pink-300 font-medium">👥 Begleitung: ${g.plusOne}</div>` : ''}
@@ -222,8 +284,9 @@
             document.body.removeChild(link);
         }
 
-        setInterval(renderGuestListView, 1000);
+        checkForExistingSubmission();
         renderGuestListView();
+        setInterval(renderGuestListView, 2000);
     </script>
 </body>
 </html>
