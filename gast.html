@@ -46,9 +46,6 @@
                 <div><span id="hours" class="text-2xl font-black text-cyan-400">00</span><span class="block text-[9px] text-slate-400 uppercase font-bold">Std</span></div>
                 <div><span id="minutes" class="text-2xl font-black text-emerald-400">00</span><span class="block text-[9px] text-slate-400 uppercase font-bold">Min</span></div>
             </div>
-            <button onclick="addToCalendar()" class="w-full bg-slate-900/80 hover:bg-slate-800 text-pink-300 font-bold py-2.5 px-4 rounded-xl border border-pink-500/30 text-xs transition shadow-md flex items-center justify-center gap-2">
-                📅 Termin im Kalender speichern (.ics)
-            </button>
         </div>
 
         <!-- Formular & Gästeliste -->
@@ -72,12 +69,9 @@
 
                 <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5 space-y-2">
                     <label class="text-xs font-bold text-slate-300">🍕 Pizza-Bedarf:</label>
-                    <div class="grid grid-cols-3 gap-2">
+                    <div class="grid grid-cols-2 gap-2">
                         <label class="flex items-center justify-center gap-1 bg-slate-900 p-2.5 rounded-xl cursor-pointer text-xs text-slate-200 border border-slate-800 font-semibold">
                             <input type="radio" name="pizzaChoice" value="Ja" checked class="accent-pink-500"> Ja
-                        </label>
-                        <label class="flex items-center justify-center gap-1 bg-slate-900 p-2.5 rounded-xl cursor-pointer text-xs text-slate-200 border border-slate-800 font-semibold">
-                            <input type="radio" name="pizzaChoice" value="Teile" class="accent-pink-500"> Teilen
                         </label>
                         <label class="flex items-center justify-center gap-1 bg-slate-900 p-2.5 rounded-xl cursor-pointer text-xs text-slate-200 border border-slate-800 font-semibold">
                             <input type="radio" name="pizzaChoice" value="Nein" class="accent-pink-500"> Nein
@@ -116,7 +110,6 @@
     </div>
 
     <script>
-        // Deine Firebase Konfiguration aus dem Screenshot
         const firebaseConfig = {
             apiKey: "AIzaSyDjldID2Khu8KWu0dQjkkWOc-dlNu90d28",
             authDomain: "geburtstag-5bb5e.firebaseapp.com",
@@ -268,33 +261,12 @@
                     </div>
                     ${g.plusOne ? `<div class="text-[11px] text-pink-300 font-medium">👥 Begleitung: ${g.plusOne}</div>` : ''}
                     <div class="text-[10px] text-amber-300">🍕 Pizza: ${g.pizza} | 📦 Mitbringsel: ${g.item || 'Keins'}</div>
+                    ${g.drink ? `<div class="text-[10px] text-violet-300">🥤 Getränk: ${g.drink}</div>` : ''}
+                    ${g.music ? `<div class="text-[10px] text-pink-300">🎵 Musik: ${g.music}</div>` : ''}
                     ${g.activity ? `<div class="text-[10px] text-cyan-300 font-medium">🎯 Plan: ${g.activity}</div>` : ''}
                 `;
                 container.appendChild(row);
             });
-        }
-
-        function addToCalendar() {
-            const icsData = [
-                "BEGIN:VCALENDAR",
-                "VERSION:2.0",
-                "BEGIN:VEVENT",
-                "SUMMARY:Niklas' 18. Geburtstag - Garten Party",
-                "DESCRIPTION:Feier im Garten in der Bardowicker Str. 24, Scharnebeck.",
-                "LOCATION:Bardowicker Str. 24, 21379 Scharnebeck",
-                "DTSTART:20261113T180000Z",
-                "DTEND:20261114T020000Z",
-                "END:VEVENT",
-                "END:VCALENDAR"
-            ].join("\n");
-
-            const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.setAttribute('download', 'Niklas_18_Geburtstag.ics');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
 
         listenToLiveUpdates();
