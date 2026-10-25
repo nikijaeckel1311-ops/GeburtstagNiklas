@@ -83,6 +83,7 @@
                 <input type="text" id="guestItemInput" placeholder="Mitbringsel (z.B. Klappstuhl)..." class="input-field w-full rounded-xl px-3 py-2 text-xs text-slate-200">
                 <input type="text" id="guestDrinkInput" placeholder="Getränke-Wunsch..." class="input-field w-full rounded-xl px-3 py-2 text-xs text-slate-200">
                 <input type="text" id="guestMusicInput" placeholder="Musikwunsch..." class="input-field w-full rounded-xl px-3 py-2 text-xs text-slate-200">
+                <input type="text" id="guestActivityInput" placeholder="Was wollen wir machen? (z.B. Bierpong, Feuer machen)..." class="input-field w-full rounded-xl px-3 py-2 text-xs text-slate-200">
 
                 <div class="grid grid-cols-3 gap-2.5 pt-2">
                     <button onclick="submitGuest('yes')" id="btnYes" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg transition">🍻 Dabei</button>
@@ -152,6 +153,7 @@
                 document.getElementById('guestItemInput').value = myRecord.item || '';
                 document.getElementById('guestDrinkInput').value = myRecord.drink || '';
                 document.getElementById('guestMusicInput').value = myRecord.music || '';
+                document.getElementById('guestActivityInput').value = myRecord.activity || '';
 
                 if (myRecord.pizza) {
                     const radio = document.querySelector(`input[name="pizzaChoice"][value="${myRecord.pizza}"]`);
@@ -181,13 +183,14 @@
             const item = document.getElementById('guestItemInput').value.trim();
             const drink = document.getElementById('guestDrinkInput').value.trim();
             const music = document.getElementById('guestMusicInput').value.trim();
+            const activity = document.getElementById('guestActivityInput').value.trim();
 
             let guests = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
-                { id: "admin_niklas", name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "" }
+                { id: "admin_niklas", name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "", activity: "" }
             ];
 
             const existingIndex = guests.findIndex(g => (g.id && g.id === guestId) || g.name.toLowerCase() === name.toLowerCase());
-            const newRecord = { id: guestId, name, status, plusOne, pizza, item, drink, music };
+            const newRecord = { id: guestId, name, status, plusOne, pizza, item, drink, music, activity };
 
             if(existingIndex >= 0) {
                 guests[existingIndex] = newRecord;
@@ -222,7 +225,7 @@
             const container = document.getElementById('guestListView');
             const statsCounter = document.getElementById('statsCounter');
             let guests = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
-                { id: "admin_niklas", name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "" }
+                { id: "admin_niklas", name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "", activity: "" }
             ];
 
             const myGuestId = localStorage.getItem(MY_SUBMISSION_KEY);
@@ -256,6 +259,7 @@
                     </div>
                     ${g.plusOne ? `<div class="text-[11px] text-pink-300 font-medium">👥 Begleitung: ${g.plusOne}</div>` : ''}
                     <div class="text-[10px] text-amber-300">🍕 Pizza: ${g.pizza} | 📦 Mitbringsel: ${g.item || 'Keins'}</div>
+                    ${g.activity ? `<div class="text-[10px] text-cyan-300 font-medium">🎯 Plan: ${g.activity}</div>` : ''}
                 `;
                 container.appendChild(row);
             });
