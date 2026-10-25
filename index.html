@@ -134,7 +134,7 @@
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3 border-b border-slate-800 pb-4">
                         <div>
                             <h2 class="text-lg font-bold text-cyan-400 flex items-center gap-2"><span>👥</span> Gästeliste & Verwaltung</h2>
-                            <p class="text-xs text-slate-400">Zusagen im Überblick.</p>
+                            <p class="text-xs text-slate-400">Zusagen, Wünsche und geplante Aktionen im Überblick.</p>
                         </div>
                         <div class="flex gap-2 text-[11px] font-extrabold">
                             <span id="badge-yes" class="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20">0 Dabei</span>
@@ -194,7 +194,7 @@
         function loadAdminGuests() {
             const listContainer = document.getElementById('adminGuestList');
             let guests = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
-                { name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "" }
+                { id: "admin_niklas", name: "Niklas", status: "yes", plusOne: "", pizza: "Ja", item: "", drink: "Glühwein", music: "", activity: "" }
             ];
 
             listContainer.innerHTML = '';
@@ -225,6 +225,7 @@
                     </div>
                     ${g.plusOne ? `<div class="text-[11px] text-pink-300">👥 Begleitung: ${g.plusOne}</div>` : ''}
                     <div class="text-[10px] text-amber-300">🍕 Pizza: ${g.pizza} | 📦 Mitbringsel: ${g.item || 'Keins'}</div>
+                    ${g.activity ? `<div class="text-[10px] text-cyan-300 font-medium">🎯 Geplant: ${g.activity}</div>` : ''}
                 `;
                 listContainer.appendChild(row);
             });
